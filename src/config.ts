@@ -28,6 +28,7 @@ export interface Config {
     commitMessage?: string;
     commitUserName?: string;
     commitUserEmail?: string;
+    outputFormat?: string;
 }
 
 export const VALID_TOOLS = [
@@ -246,6 +247,7 @@ export async function configFromJobInput(): Promise<Config> {
     const commitMessage: string | undefined = core.getInput('commit-message') || undefined;
     const commitUserName: string | undefined = core.getInput('commit-user-name') || undefined;
     const commitUserEmail: string | undefined = core.getInput('commit-user-name') || undefined;
+    const outputFormat: string | undefined = core.getInput('output-format') || undefined;
 
     validateToolType(tool);
     outputFilePath = await validateOutputFilePath(outputFilePath);
@@ -296,5 +298,6 @@ export async function configFromJobInput(): Promise<Config> {
         commitMessage,
         commitUserName,
         commitUserEmail,
+        outputFormat,
     };
 }

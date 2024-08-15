@@ -88,6 +88,10 @@ inputs:
   commit-user-email:
     description: 'Optional email address to use for Git commits'
     required: false
+  output-format:
+    description: 'The format to write the benchmark data. One of "js", "json"'
+    required: false
+    default: 'js'
 
 runs:
   using: 'node20'

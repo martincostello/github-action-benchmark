@@ -24,22 +24,22 @@ const DEFAULT_DATA_JSON = {
     entries: {},
 };
 
-async function loadDataJs(dataPath: string): Promise<DataJson> {
+async function loadData(dataPath: string, isJson: boolean = false): Promise<DataJson> {
     try {
-        const script = await fs.readFile(dataPath, 'utf8');
-        const json = script.slice(SCRIPT_PREFIX.length);
+        const content = await fs.readFile(dataPath, 'utf8');
+        const json = isJson ? content : content.slice(SCRIPT_PREFIX.length);
         const parsed = JSON.parse(json);
-        core.debug(`Loaded data.js at ${dataPath}`);
+        core.debug(`Loaded data at ${dataPath}`);
         return parsed;
     } catch (err) {
-        console.log(`Could not find data.js at ${dataPath}. Using empty default: ${err}`);
+        console.log(`Could not find data at ${dataPath}. Using empty default: ${err}`);
         return { ...DEFAULT_DATA_JSON };
     }
 }
 
-async function storeDataJs(dataPath: string, data: DataJson) {
-    const script = SCRIPT_PREFIX + JSON.stringify(data, null, 2);
-    await fs.writeFile(dataPath, script, 'utf8');
+async function storeData(dataPath: string, data: DataJson, isJson: boolean = false) {
+    const content = (isJson ? '' : SCRIPT_PREFIX) + JSON.stringify(data, null, 2);
+    await fs.writeFile(dataPath, content, 'utf8');
     core.debug(`Overwrote ${dataPath} for adding new data`);
 }
 
@@ -416,16 +416,18 @@ async function writeBenchmarkToGitHubPagesWithRetry(
     const benchmarkDataRelativeDirPath = path.relative(process.cwd(), benchmarkDataDirPath);
     const benchmarkDataDirFullPath = path.join(benchmarkBaseDir, benchmarkDataRelativeDirPath);
 
-    const dataPath = path.join(benchmarkDataDirFullPath, 'data.js');
+    const isJson = config.outputFormat === 'json';
+    const fileName = isJson ? 'data.json' : 'data.js';
+    const dataPath = path.join(benchmarkDataDirFullPath, fileName);
 
     await io.mkdirP(benchmarkDataDirFullPath);
 
-    const data = await loadDataJs(dataPath);
+    const data = await loadData(dataPath, isJson);
     const prevBench = addBenchmarkToDataJson(name, bench, data, maxItemsInChart);
 
-    await storeDataJs(dataPath, data);
+    await storeData(dataPath, data, isJson);
 
-    await git.cmd(config, extraGitArguments, 'add', path.join(benchmarkDataRelativeDirPath, 'data.js'));
+    await git.cmd(config, extraGitArguments, 'add', path.join(benchmarkDataRelativeDirPath, fileName));
     await addIndexHtmlIfNeeded(config, extraGitArguments, benchmarkDataRelativeDirPath, benchmarkBaseDir);
 
     const commitMessage = config.commitMessage ?? `add ${name} (${tool}) benchmark result for ${bench.commit.id}`;
